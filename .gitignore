@@ -24,7 +24,6 @@ uploads/
 .DS_Store
 Thumbs.db
 
-model
 checkpoints
 uploads
 splits
