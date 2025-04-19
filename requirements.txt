@@ -1,0 +1,22 @@
+Flask
+moviepy
+
+torch 
+torchvision 
+ 
+numpy 
+pillow 
+opencv-python 
+librosa 
+soundfile 
+transformers 
+openai-whisper 
+# ray[default]
+insightface
+onnxruntime
+# onnxruntime-gpu 
+scikit-learn 
+transformers 
+tqdm
+pyinstaller
+einops
