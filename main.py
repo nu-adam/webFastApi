@@ -5,9 +5,11 @@ from moviepy import VideoFileClip
 from model.app import main as analyze_clip
 from flask import Response
 import json
+from flas_cors import CORS
 
 app = Flask(__name__)
 
+CORS(app, resources={r"/*": {"origins": "*"}})
 # Get absolute paths for the upload and split directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')

@@ -35,7 +35,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.ba
 
 # Emotion labels (update based on your training)
 EMOTION_LABELS = [
-    "neutral", "angfdskjfnksdjfer", "sadness", 
+    "neutral", "anger", "sadness", 
     "frustration", "excited", "happiness"
 ]
 
