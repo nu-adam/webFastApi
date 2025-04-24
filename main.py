@@ -5,7 +5,9 @@ from moviepy import VideoFileClip
 from model.app import main as analyze_clip
 from flask import Response
 import json
-from flas_cors import CORS
+from flask_cors import CORS
+from threading import Lock
+import time
 
 app = Flask(__name__)
 
@@ -22,6 +24,35 @@ os.makedirs(SPLIT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SPLIT_FOLDER'] = SPLIT_FOLDER
 
+# Add these at the top of your file
+progress_data = {
+    'message': 'Waiting for upload to start...',
+    'progress': 0,
+    'error': None,
+    'complete': False
+}
+progress_lock = Lock()
+
+@app.route('/upload-progress', methods=['GET'])
+def upload_progress():
+    def generate():
+        last_sent = 0
+        while True:
+            with progress_lock:
+                current_data = progress_data.copy()
+            
+            # Only send if there's new data or it's complete
+            if current_data['progress'] != last_sent or current_data['complete']:
+                yield f"data: {json.dumps(current_data)}\n\n"
+                last_sent = current_data['progress']
+                
+                if current_data['complete'] or current_data['error']:
+                    break
+            
+            time.sleep(0.5)  # Reduce CPU usage
+
+    return Response(generate(), mimetype='text/event-stream')
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'video' not in request.files:
@@ -31,33 +62,63 @@ def upload_file():
     if video_file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    # Sanitize filename
-    original_filename = os.path.basename(video_file.filename)
-    if not original_filename:
-        return jsonify({"error": "Invalid filename"}), 400
-
-    # Add timestamp prefix to filename
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f"{timestamp}_{original_filename}"
-    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    
     try:
-        video_file.save(save_path)
-    except Exception as e:
-        return jsonify({"error": f"Failed to save file: {str(e)}"}), 500
+        # Reset progress data
+        with progress_lock:
+            progress_data.update({
+                'message': 'Starting upload...',
+                'progress': 0,
+                'error': None,
+                'complete': False
+            })
 
-    # Get filename without extension for folder naming
-    base_name = os.path.splitext(original_filename)[0]
-    clip_output_dir = os.path.join(app.config['SPLIT_FOLDER'], base_name)
-    os.makedirs(clip_output_dir, exist_ok=True)
+        # Sanitize filename
+        original_filename = os.path.basename(video_file.filename)
+        if not original_filename:
+            with progress_lock:
+                progress_data.update({
+                    'error': 'Invalid filename',
+                    'complete': True
+                })
+            return jsonify({"error": "Invalid filename"}), 400
 
-    # Split the video into fixed-length clips
-    CLIP_LENGTH = 4  # seconds
+        # Add timestamp prefix to filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{timestamp}_{original_filename}"
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Save file in chunks to track progress
+        total_size = int(request.headers.get('Content-Length', 0))
+        chunk_size = 4096  # 4KB chunks
+        bytes_read = 0
+        
+        with open(save_path, 'wb') as f:
+            while True:
+                chunk = video_file.stream.read(chunk_size)
+                if not chunk:
+                    break
+                f.write(chunk)
+                bytes_read += len(chunk)
+                progress = min(50, (bytes_read / total_size) * 50)  # First 50% for upload
+                with progress_lock:
+                    progress_data.update({
+                        'progress': progress,
+                        'message': 'Uploading video...'
+                    })
 
-    try:
+        # Get filename without extension for folder naming
+        base_name = os.path.splitext(original_filename)[0]
+        clip_output_dir = os.path.join(app.config['SPLIT_FOLDER'], base_name)
+        os.makedirs(clip_output_dir, exist_ok=True)
+
+        # Split the video into fixed-length clips
+        CLIP_LENGTH = 4  # seconds
+
         clip = VideoFileClip(save_path)
         duration = int(clip.duration)
+        total_clips = (duration + CLIP_LENGTH - 1) // CLIP_LENGTH  # Round up
         part_index = 1
+        
         for start_time in range(0, duration, CLIP_LENGTH):
             end_time = min(start_time + CLIP_LENGTH, clip.duration)
             subclip = clip.subclipped(start_time, end_time)
@@ -70,16 +131,44 @@ def upload_file():
                 threads=4
             )
             part_index += 1
+            
+            # Update progress (second 50% for splitting)
+            progress = 50 + (part_index / total_clips) * 50
+            with progress_lock:
+                progress_data.update({
+                    'progress': progress,
+                    'message': f'Splitting video ({part_index}/{total_clips})...',
+                    'current_clip': part_index,
+                    'total_clips': total_clips
+                })
+        
         clip.close()
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        
+        # Send completion data
+        with progress_lock:
+            progress_data.update({
+                'progress': 100,
+                'message': 'Upload and split complete!',
+                'uploaded_path': save_path,
+                'split_folder': clip_output_dir,
+                'clips_created': part_index - 1,
+                'complete': True
+            })
 
-    return jsonify({
-        "message": "File uploaded and split successfully",
-        "uploaded_path": save_path,
-        "split_folder": clip_output_dir,
-        "clips_created": part_index - 1
-    })
+        return jsonify({
+            "message": "File uploaded and split successfully",
+            "uploaded_path": save_path,
+            "split_folder": clip_output_dir,
+            "clips_created": part_index - 1
+        })
+            
+    except Exception as e:
+        with progress_lock:
+            progress_data.update({
+                'error': str(e),
+                'complete': True
+            })
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/analyze-clips', methods=['GET'])
 def analyze_clips():
