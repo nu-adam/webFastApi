@@ -27,16 +27,16 @@ def get_base_path():
     return base_path
 
 BASE_PATH = get_base_path()
-MODEL_CHECKPOINT = os.path.join(BASE_PATH, "checkpoints", "best_model_epoch9.pth")
+MODEL_CHECKPOINT = os.path.join(BASE_PATH, "checkpoints", "trial_1_best_model.pth")
 
 # Configuration
-NUM_CLASSES = 7  # Update based on your model
+NUM_CLASSES = 6  # Update based on your model
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
 # Emotion labels (update based on your training)
 EMOTION_LABELS = [
-    "neutral", "happy", "sad", "anger", 
-    "surprise", "disgust", "fear"
+    "neutral", "angfdskjfnksdjfer", "sadness", 
+    "frustration", "excited", "happiness"
 ]
 
 # Suppressing Logging:
@@ -168,11 +168,11 @@ class TransformerFusion(nn.Module):
         return x
 
 class TransformerDecoder(nn.Module):
-    def __init__(self, embed_dim, num_classes, num_heads=4, num_layers=2, dropout=0.1, temperature=2.0):
+    def __init__(self, embed_dim, num_classes, num_heads=4, num_layers=2, dropout=0.1): # , temperature=2.0):
         super(TransformerDecoder, self).__init__()
         self.num_classes = num_classes
         self.hidden_dim = embed_dim
-        self.temperature = temperature
+        # self.temperature = temperature
         self.emotion_queries = nn.Parameter(torch.randn(num_classes, embed_dim))
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=embed_dim, nhead=num_heads, dim_feedforward=4*embed_dim, dropout=dropout, batch_first=True
@@ -188,12 +188,12 @@ class TransformerDecoder(nn.Module):
             memory=fused_features
         )
         emotion_logits = self.fc_out(emotion_representations).squeeze(-1)
-        emotion_logits = emotion_logits / self.temperature
+        # emotion_logits = emotion_logits / self.temperature
         emotion_probs = torch.sigmoid(emotion_logits)
         return emotion_probs
 
 class MultimodalEmotionRecognition(nn.Module):
-    def __init__(self, enabled_modalities=["video", "audio", "text"], embed_dim=256, num_heads=4, num_layers=2, num_classes=7):
+    def __init__(self, enabled_modalities=["video", "audio", "text"], embed_dim=256, num_heads=4, num_layers=2, num_classes=6):
         super(MultimodalEmotionRecognition, self).__init__()
         self.enabled_modalities = enabled_modalities
         self.video_encoder = VideoEncoder(embed_dim=embed_dim) if "video" in enabled_modalities else None
@@ -254,8 +254,6 @@ class EmotionRecognizer:
                 raise RuntimeError(f"Failed to extract audio from video: {str(e)}")
         
         return audio_path
-        
-        return audio_path
     
     def extract_mel_spectrogram(self, video_path):
         audio_path = self.extract_audio_from_video(video_path)
@@ -265,14 +263,15 @@ class EmotionRecognizer:
         mel_resized = cv2.resize(mel_spec_db, (224, 224), interpolation=cv2.INTER_CUBIC)
         mel_resized = (mel_resized - mel_resized.min()) / (mel_resized.max() - mel_resized.min())
         mel_rgb = np.stack([mel_resized] * 3, axis=-1)
-        mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32).permute(2, 0, 1)    
+        # mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32).permute(2, 0, 1)    
+        mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32, device=self.device).permute(2, 0, 1)
         mel_normalized = T.Normalize(
             mean=[0.485, 0.456, 0.406],
             std=[0.229, 0.224, 0.225]
         )(mel_tensor)
         return mel_normalized
     
-    def extract_video_frames(self, video_path, num_frames=8):
+    def extract_video_frames(self, video_path, num_frames=10):
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -330,7 +329,7 @@ class EmotionRecognizer:
     def process_text(self, text):
         encoding = self.tokenizer(
             text,
-            max_length=64,
+            max_length=32,
             padding="max_length",
             truncation=True,
             return_tensors="pt"
@@ -349,12 +348,12 @@ class EmotionRecognizer:
                 else:
                     video_tensor = torch.zeros((1, 3, 64, 64))
                 
-                max_faces = 8
-                if len(video_tensor) > max_faces:
-                    indices = torch.randperm(len(video_tensor))[:max_faces]
+                num_faces = 4
+                if len(video_tensor) > num_faces:
+                    indices = torch.randperm(len(video_tensor))[:num_faces]
                     video_tensor = video_tensor[indices]
-                elif len(video_tensor) < max_faces:
-                    padding = torch.zeros((max_faces - len(video_tensor), 3, 64, 64))
+                elif len(video_tensor) < num_faces:
+                    padding = torch.zeros((num_faces - len(video_tensor), 3, 64, 64))
                     video_tensor = torch.cat([video_tensor, padding])
                 
                 # Process audio
@@ -379,7 +378,7 @@ class EmotionRecognizer:
                     )
                 
                 # Get predictions
-                probabilities = torch.softmax(outputs, dim=1).squeeze().cpu().numpy()
+                probabilities = outputs.squeeze().cpu().numpy()
                 predicted_class = np.argmax(probabilities)
                 emotion = EMOTION_LABELS[predicted_class]
                 
@@ -417,5 +416,33 @@ def main(video_path, text=''):
     return json.dumps(result, indent=2)
 
 if __name__ == "__main__":
-    result = main()
-    print(result)
+    # Example usage with your specific video path
+    video_path = "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/splits/videoplayback/videoplayback_part15.mp4"
+    sample_text = ""  # Optional text input
+    
+    try:
+        # Initialize recognizer (with suppressed output during init)
+        # with suppress_all():
+        recognizer = EmotionRecognizer()
+        
+        # Process the video
+        print(f"\nProcessing video: {video_path}...")
+        result = recognizer.predict_emotion(video_path, sample_text)
+        
+        # Pretty-print results
+        print("\nEmotion Recognition Results:")
+        print("-" * 50)
+        print(f"Predicted Emotion: {result['emotion']} (Confidence: {result['confidence']:.2%})")
+        print("\nDetailed Probabilities:")
+        for emotion, prob in result['probabilities'].items():
+            print(f"{emotion.capitalize():<10}: {prob:.2%}")
+        print("-" * 50)
+        print(f"Analysis completed at: {result['timestamp']}")
+        
+    except Exception as e:
+        print(f"\nError processing video:")
+        print("-" * 50)
+        print(f"File: {video_path}")
+        print(f"Error: {str(e)}")
+        print("-" * 50)
+        print("Note: Ensure the file exists and is a valid video format")

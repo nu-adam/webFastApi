@@ -49,15 +49,17 @@ def upload_file():
     clip_output_dir = os.path.join(app.config['SPLIT_FOLDER'], base_name)
     os.makedirs(clip_output_dir, exist_ok=True)
 
-    # Split the video into 1-second clips
+    # Split the video into fixed-length clips
+    CLIP_LENGTH = 4  # seconds
+
     try:
         clip = VideoFileClip(save_path)
         duration = int(clip.duration)
-        for i in range(duration):
-            start_time = i
-            end_time = min(i+1, clip.duration)
+        part_index = 1
+        for start_time in range(0, duration, CLIP_LENGTH):
+            end_time = min(start_time + CLIP_LENGTH, clip.duration)
             subclip = clip.subclipped(start_time, end_time)
-            subclip_path = os.path.join(clip_output_dir, f"{base_name}_part{i+1}.mp4")
+            subclip_path = os.path.join(clip_output_dir, f"{base_name}_part{part_index}.mp4")
             subclip.write_videofile(
                 subclip_path, 
                 codec='libx264', 
@@ -65,6 +67,7 @@ def upload_file():
                 logger=None,
                 threads=4
             )
+            part_index += 1
         clip.close()
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -73,7 +76,7 @@ def upload_file():
         "message": "File uploaded and split successfully",
         "uploaded_path": save_path,
         "split_folder": clip_output_dir,
-        "clips_created": duration
+        "clips_created": part_index - 1
     })
 
 @app.route('/analyze-clips', methods=['GET'])
