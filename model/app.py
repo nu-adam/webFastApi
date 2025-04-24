@@ -189,7 +189,7 @@ class TransformerDecoder(nn.Module):
         )
         emotion_logits = self.fc_out(emotion_representations).squeeze(-1)
         # emotion_logits = emotion_logits / self.temperature
-        emotion_probs = torch.sigmoid(emotion_logits)
+        emotion_probs = torch.softmax(emotion_logits, dim=1)
         return emotion_probs
 
 class MultimodalEmotionRecognition(nn.Module):
