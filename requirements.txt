@@ -22,3 +22,5 @@ transformers
 tqdm
 pyinstaller
 einops
+av
+flask-sqlalchemy
