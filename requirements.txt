@@ -24,3 +24,4 @@ pyinstaller
 einops
 av
 flask-sqlalchemy
+flask-login

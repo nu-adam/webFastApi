@@ -28,3 +28,4 @@ checkpoints
 uploads
 splits
 temp_audio
+instance/

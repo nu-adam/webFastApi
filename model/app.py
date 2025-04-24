@@ -39,23 +39,23 @@ EMOTION_LABELS = [
     "frustration", "excited", "happiness"
 ]
 
-# Suppressing Logging:
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-transformers_logging.set_verbosity_error()
-warnings.filterwarnings("ignore")
-logging.getLogger().setLevel(logging.ERROR)
-@contextmanager
-def suppress_all():
-    with open(os.devnull, 'w') as devnull:
-        old_stdout = sys.stdout
-        old_stderr = sys.stderr
-        sys.stdout = devnull
-        sys.stderr = devnull
-        try:
-            yield
-        finally:
-            sys.stdout = old_stdout
-            sys.stderr = old_stderr
+# # Suppressing Logging:
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# transformers_logging.set_verbosity_error()
+# warnings.filterwarnings("ignore")
+# logging.getLogger().setLevel(logging.ERROR)
+# @contextmanager
+# def suppress_all():
+#     with open(os.devnull, 'w') as devnull:
+#         old_stdout = sys.stdout
+#         old_stderr = sys.stderr
+#         sys.stdout = devnull
+#         sys.stderr = devnull
+#         try:
+#             yield
+#         finally:
+#             sys.stdout = old_stdout
+#             sys.stderr = old_stderr
 
 class VGGFeatureExtractor(nn.Module):
     def __init__(self):
@@ -217,7 +217,7 @@ class MultimodalEmotionRecognition(nn.Module):
 class EmotionRecognizer:
     def __init__(self, model_path=MODEL_CHECKPOINT):
         # Nuclear suppression during initialization
-        with suppress_all():
+        # with suppress_all():
             # Configure ONNX Runtime to be completely silent
             from onnxruntime import SessionOptions
             so = SessionOptions()
@@ -242,34 +242,127 @@ class EmotionRecognizer:
         if output_dir is None:
             output_dir = os.path.join(get_base_path(), "temp_audio")
         os.makedirs(output_dir, exist_ok=True)
+        
         video_name = os.path.basename(video_path).split('.')[0]
         audio_path = os.path.join(output_dir, f"{video_name}.wav")
         
         if not os.path.exists(audio_path):
+            # Method 1: Try using librosa first
             try:
+                print(f"Attempting audio extraction with librosa from {video_path}")
                 y, sr = librosa.load(video_path, sr=16000, mono=True)
                 import soundfile as sf
                 sf.write(audio_path, y, sr)
+                print(f"Successfully extracted audio with librosa to {audio_path}")
+                return audio_path
             except Exception as e:
-                raise RuntimeError(f"Failed to extract audio from video: {str(e)}")
+                print(f"Librosa extraction failed: {str(e)}")
+                
+            # Method 2: If librosa fails, try PyAV
+            try:
+                import av
+                
+                print(f"Extracting audio using PyAV from {video_path}")
+                input_container = av.open(video_path)
+                
+                # Find the first audio stream
+                audio_stream = next((s for s in input_container.streams if s.type == 'audio'), None)
+                
+                if audio_stream is None:
+                    raise RuntimeError("No audio stream found in the video file")
+                
+                # Create resampler
+                resampler = av.audio.resampler.AudioResampler(
+                    format='s16', 
+                    layout='mono', 
+                    rate=16000
+                )
+                
+                # Open output file
+                output_container = av.open(audio_path, mode='w')
+                output_stream = output_container.add_stream('pcm_s16le', rate=16000)
+                
+                # Decode audio frames and encode to output
+                for frame in input_container.decode(audio_stream):
+                    # Resample if needed
+                    if frame.sample_rate != 16000 or frame.layout.name != 'mono':
+                        frames = resampler.resample(frame)
+                    else:
+                        frames = [frame]
+                    
+                    # Encode and mux
+                    for frame in frames:
+                        for packet in output_stream.encode(frame):
+                            output_container.mux(packet)
+                
+                # Flush encoder
+                for packet in output_stream.encode(None):
+                    output_container.mux(packet)
+                
+                # Close files
+                output_container.close()
+                input_container.close()
+                
+                print(f"Successfully extracted audio with PyAV to {audio_path}")
+                return audio_path
+                
+            except Exception as e:
+                print(f"PyAV audio extraction failed: {str(e)}")
+                
+            # Method 3: If both methods fail, create a dummy audio file
+            try:
+                import numpy as np
+                import soundfile as sf
+                
+                # Create 1 second of silence at 16kHz
+                dummy_audio = np.zeros(16000, dtype=np.float32)
+                sf.write(audio_path, dummy_audio, 16000)
+                print(f"Created dummy silent audio file")
+                return audio_path
+                
+            except Exception as dummy_error:
+                raise RuntimeError(f"All audio extraction methods failed: {str(dummy_error)}")
         
         return audio_path
     
     def extract_mel_spectrogram(self, video_path):
         audio_path = self.extract_audio_from_video(video_path)
         y, sr = librosa.load(audio_path, sr=16000)
-        mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
-        mel_spec_db = librosa.amplitude_to_db(mel_spec, ref=np.max)
-        mel_resized = cv2.resize(mel_spec_db, (224, 224), interpolation=cv2.INTER_CUBIC)
-        mel_resized = (mel_resized - mel_resized.min()) / (mel_resized.max() - mel_resized.min())
-        mel_rgb = np.stack([mel_resized] * 3, axis=-1)
-        # mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32).permute(2, 0, 1)    
+        
+        # Check if audio is silent (all zeros or very low amplitude)
+        if np.max(np.abs(y)) < 1e-6:
+            print("Warning: Audio is silent or near-silent, using synthetic spectrogram")
+            # Create a synthetic non-zero spectrogram instead of all zeros
+            mel_normalized = np.random.uniform(0.1, 0.2, (224, 224))
+        else:
+            # Generate mel spectrogram from audio
+            mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
+            mel_spec_db = librosa.amplitude_to_db(mel_spec, ref=np.max)
+            mel_resized = cv2.resize(mel_spec_db, (224, 224), interpolation=cv2.INTER_CUBIC)
+            
+            # Safe normalization to avoid division by zero
+            min_val = mel_resized.min()
+            max_val = mel_resized.max()
+            range_val = max_val - min_val
+            
+            # Check if range is too small (avoiding division by zero or near-zero)
+            if range_val < 1e-6:
+                print("Warning: Constant mel spectrogram detected, using synthetic values")
+                mel_normalized = np.random.uniform(0.1, 0.2, mel_resized.shape)
+            else:
+                mel_normalized = (mel_resized - min_val) / range_val
+        
+        # Create RGB version of the spectrogram
+        mel_rgb = np.stack([mel_normalized] * 3, axis=-1)
+        
+        # Convert to tensor and normalize
         mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32, device=self.device).permute(2, 0, 1)
-        mel_normalized = T.Normalize(
+        mel_normalized_tensor = T.Normalize(
             mean=[0.485, 0.456, 0.406],
             std=[0.229, 0.224, 0.225]
         )(mel_tensor)
-        return mel_normalized
+        
+        return mel_normalized_tensor
     
     def extract_video_frames(self, video_path, num_frames=10):
         cap = cv2.VideoCapture(video_path)
@@ -337,7 +430,7 @@ class EmotionRecognizer:
         return encoding["input_ids"], encoding["attention_mask"]
     
     def predict_emotion(self, video_path, text=""):
-        with suppress_all():
+        # with suppress_all():
             try:
                 # Process video
                 frames = self.extract_video_frames(video_path)
@@ -401,8 +494,8 @@ class EmotionRecognizer:
 
 def main(video_path, text=''):
     # Initialize recognizer with suppressed output
-    with suppress_all():
-        recognizer = EmotionRecognizer()
+    # with suppress_all():
+    recognizer = EmotionRecognizer()
     
     # Get video path from command line
     # video_path = sys.argv[1] if len(sys.argv) > 1 else None
@@ -417,7 +510,9 @@ def main(video_path, text=''):
 
 if __name__ == "__main__":
     # Example usage with your specific video path
-    video_path = "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/splits/videoplayback/videoplayback_part15.mp4"
+    video_path = r"C:\Users\sarse\Downloads\GMT20250424-140111_Clip_Damir Sarsengaliyev's Clip 04_24_2025.mp4"
+    if os.path.exists(video_path):
+        print("_______CHECKING_________")
     sample_text = ""  # Optional text input
     
     try:
@@ -432,6 +527,7 @@ if __name__ == "__main__":
         # Pretty-print results
         print("\nEmotion Recognition Results:")
         print("-" * 50)
+        print('________',result)
         print(f"Predicted Emotion: {result['emotion']} (Confidence: {result['confidence']:.2%})")
         print("\nDetailed Probabilities:")
         for emotion, prob in result['probabilities'].items():
