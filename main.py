@@ -83,7 +83,7 @@ def split_video_with_opencv(input_path, output_dir, base_name, clip_length=4):
         ret, frame = cap.read()
         if not ret:
             break
-        
+
         # Start a new clip if needed
         if frame_count % frames_per_clip == 0:
             # Close previous writer if exists
@@ -278,7 +278,6 @@ def analyze_clips(current_user):
             return jsonify({"error": "Unauthorized access to video"}), 403
 
     try:
-        # Sort video files by part number to ensure correct order
         video_files = sorted([
             os.path.join(split_folder, f) 
             for f in os.listdir(split_folder) 
@@ -293,9 +292,10 @@ def analyze_clips(current_user):
         return jsonify({"error": f"Error reading clips: {str(e)}"}), 500
 
     def generate():
-        emotion_totals = {e: 0.0 for e in ['happiness', 'frustration', 'anger', 'sadness', 'neutral', 'excited']}
+        emotion_totals = {e: 0.0 for e in ['happiness', 'anger', 'neutral', 'sadness']}  # Update to match EMOTION_LABELS
         processed_clips = 0
         errors = []
+        transcriptions = []  # Store transcriptions
 
         try:
             for idx, clip_path in enumerate(video_files, 1):
@@ -303,30 +303,30 @@ def analyze_clips(current_user):
                     if not os.path.exists(clip_path):
                         raise Exception(f"Clip not found: {clip_path}")
                     
-                    # Validate clip
                     cap = cv2.VideoCapture(clip_path)
                     if not cap.isOpened():
                         raise Exception(f"Cannot open clip: {clip_path}")
                     cap.release()
                     
-                    result = analyze_clip(clip_path)
-                    print(f"analyze= analyze_clip result for {clip_path}: {result} (type: {type(result)})")
-                    if not isinstance(result, dict):
-                        raise Exception(f"Invalid analysis result: {result}")
+                    result = json.loads(analyze_clip(clip_path))  # Parse JSON string to dict
+                    print(f"analyze_clip result for {clip_path}: {result}")
+                    if 'error' in result:
+                        raise Exception(result['error'])
                     
-                    # Use nested probabilities from result
                     probabilities = result.get('probabilities', {e: 0.0 for e in emotion_totals})
                     max_emotion = max(probabilities, key=probabilities.get)
                     formatted_result = {
                         'emotion': result.get('emotion', max_emotion),
                         'confidence': result.get('confidence', probabilities[max_emotion]),
-                        'probabilities': probabilities
+                        'probabilities': probabilities,
+                        'transcribed_text': result.get('transcribed_text', '')  # Include transcription
                     }
                     
                     for emotion in emotion_totals:
                         if emotion in probabilities:
                             emotion_totals[emotion] += probabilities[emotion]
                     processed_clips += 1
+                    transcriptions.append(formatted_result['transcribed_text'])
 
                     yield f"data: {json.dumps({
                         'current': idx,
@@ -346,7 +346,6 @@ def analyze_clips(current_user):
                     })}\n\n"
                     continue
 
-            # Calculate final scores
             final_scores = {e: t/processed_clips if processed_clips > 0 else 0.0 for e, t in emotion_totals.items()}
             
             if video_id:
@@ -355,6 +354,7 @@ def analyze_clips(current_user):
                     if video:
                         for emotion, score in final_scores.items():
                             setattr(video, emotion, score)
+                        video.transcription = " ".join(transcriptions)  # Store combined transcription
                         db.session.commit()
                 except Exception as e:
                     print(f"Database update error: {str(e)}")
@@ -362,7 +362,8 @@ def analyze_clips(current_user):
             yield f"event: complete\ndata: {json.dumps({
                 'emotion_scores': final_scores,
                 'processed_clips': processed_clips,
-                'errors': errors
+                'errors': errors,
+                'transcription': " ".join(transcriptions)  # Include in final response
             })}\n\n"
 
         except Exception as e:

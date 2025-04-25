@@ -15,6 +15,7 @@ import json
 import warnings
 import logging
 from contextlib import contextmanager
+import whisper
 
 def get_base_path():
     if getattr(sys, 'frozen', False):
@@ -35,10 +36,11 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.ba
 
 # Emotion labels (update based on your training)
 EMOTION_LABELS = [
-    "anger", "happiness", "neutral", "sadness",
+    "anger", "happiness", "neutral", 
+    "sadness"
 ]
 
-# # Suppressing Logging:
+# Suppressing Logging:
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # transformers_logging.set_verbosity_error()
 # warnings.filterwarnings("ignore")
@@ -86,7 +88,7 @@ class ProjectionNetwork(nn.Module):
         nn.init.zeros_(self.fc1.bias)
         nn.init.xavier_uniform_(self.fc2.weight)
         nn.init.zeros_(self.fc2.bias)
-
+    
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu1(x)
@@ -103,14 +105,22 @@ class AudioEncoder(nn.Module):
         self.positional_encoding = nn.Parameter(torch.randn(1, 49, embed_dim))
 
     def forward(self, x):
+        # print('Audio Encoder x1', x)
         batch_size, _, _, _ = x.shape
         x = self.feature_extractor(x)
+        # print('Audio Encoder x2', x)
         seq_len = x.size(2) * x.size(3)
+        # print('Audio Encoder seq len', seq_len)
         x = x.view(batch_size, 512, seq_len).permute(0, 2, 1)
+        # print('Audio Encoder x3', x)
         x = self.projection_network(x)
+        # print('Audio Encoder x4', x)
         x = x + self.positional_encoding
+        # print('Audio Encoder x5', x)
         x = self.transformer_encoder(x)
+        # print('Audio Encoder x6', x)
         x = x.mean(dim=1)
+        # print('Audio Encoder 76', x)
         return x
 
 class VideoEncoder(nn.Module):
@@ -123,16 +133,26 @@ class VideoEncoder(nn.Module):
         self.positional_encoding = nn.Parameter(torch.randn(1, 4, embed_dim))
 
     def forward(self, x):
+        # print('Video Encoder x1', x)
         batch_size, num_frames, channels, height, width = x.shape
         x = x.view(batch_size * num_frames, channels, height, width)
+        # print('Video Encoder x2', x)
         x = self.feature_extractor(x)
+        # print('Video Encoder x3', x)
         features = x.view(batch_size * num_frames, 512, -1).permute(0, 2, 1)
+        # print('Video Encoder f1', x)
         features = self.projection_network(features)
+        # print('Video Encoder f2', x)
         features = features + self.positional_encoding
+        # print('Video Encoder f3', x)
         features = features.view(batch_size, num_frames, -1, self.embed_dim)
+        # print('Video Encoder f4', x)
         features = features.mean(dim=2)
+        # print('Video Encoder f5', x)
         features = self.transformer_encoder(features)
+        # print('Video Encoder f6', x)
         features = features.mean(dim=1)
+        # print('Video Encoder f7', x)
         return features
 
 class TextEncoder(nn.Module):
@@ -148,12 +168,20 @@ class TextEncoder(nn.Module):
                 p.requires_grad = False
 
     def forward(self, input_ids, attention_mask):
+        # print('Text Encoder inp_ids1', input_ids)
+        # print('Text Encoder att_msk1', attention_mask)
         input_ids = input_ids.squeeze(1)
+        # print('Text Encoder inp_ids2', input_ids)
         attention_mask = attention_mask.squeeze(1)
+        # print('Text Encoder att_msk2', attention_mask)
         x = self.text_model(input_ids=input_ids, attention_mask=attention_mask)
+        # print('Text Encoder x1', x)
         x = x.last_hidden_state[:, 0, :]
+        # print('Text Encoder x2', x)
         x = self.projection_network(x)
+        # print('Text Encoder x3', x)
         x = self.norm(x)
+        # print('Text Encoder x4', x)
         return x
 
 class TransformerFusion(nn.Module):
@@ -169,9 +197,13 @@ class TransformerFusion(nn.Module):
             features = modalities_features[0].unsqueeze(1)
         else:
             features = torch.stack(modalities_features, dim=1)
+            # print('Fuser f1', features)
         positional_encoding = self.positional_encoding[:, :num_modalities, :]
+        # print('Fuser pos_enc', positional_encoding)
         features += positional_encoding
+        # print('Fuser f2', features)
         x = self.transformer(features)
+        # print('Fuser x', x)
         return x
 
 class TransformerDecoder(nn.Module):
@@ -188,15 +220,20 @@ class TransformerDecoder(nn.Module):
         self.fc_out = nn.Linear(embed_dim, 1)
 
     def forward(self, fused_features):
+        # print('Decoder f1', fused_features)
         batch_size = fused_features.size(0)
         emotion_queries = repeat(self.emotion_queries, 'num_classes embed_dim -> batch_size num_classes embed_dim', batch_size=batch_size)
+        # print('Decoder em_qrs', emotion_queries)
         emotion_representations = self.transformer_decoder(
             tgt=emotion_queries,
             memory=fused_features
         )
+        # print('Decoder em_repr', emotion_representations)
         emotion_logits = self.fc_out(emotion_representations).squeeze(-1)
+        # print('Decoder em_log', emotion_logits)
         # emotion_logits = emotion_logits / self.temperature
         emotion_probs = torch.softmax(emotion_logits, dim=1)
+        # print('Decoder em_prob', emotion_probs)
         return emotion_probs
 
 class MultimodalEmotionRecognition(nn.Module):
@@ -225,151 +262,77 @@ class EmotionRecognizer:
     def __init__(self, model_path=MODEL_CHECKPOINT):
         # Nuclear suppression during initialization
         # with suppress_all():
-            # Configure ONNX Runtime to be completely silent
-            from onnxruntime import SessionOptions
-            so = SessionOptions()
-            so.log_severity_level = 4  # FATAL level (most severe)
+        # Configure ONNX Runtime to be completely silent
+        from onnxruntime import SessionOptions
+        so = SessionOptions()
+        so.log_severity_level = 4  # FATAL level (most severe)
+        
+        # Initialize FaceAnalysis with maximum suppression
+        self.face_app = FaceAnalysis(
+            name="buffalo_l",
+            providers=["CPUExecutionProvider"],
+            session_options=so
+        )
+        self.face_app.prepare(ctx_id=0, det_size=(640, 640))
+        
+        # Load other components
+        self.device = DEVICE
+        self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
+        self.model = MultimodalEmotionRecognition(num_classes=NUM_CLASSES).to(self.device)
+        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+        self.model.eval()
+        
+        # Initialize Whisper model
+        self.whisper_model = whisper.load_model("base")  # Options: tiny, base, small, medium, large
+        # Move Whisper to device if using GPU/MPS
+        if self.device.type in ["cuda", "mps"]:
+            self.whisper_model.to(self.device)
             
-            # Initialize FaceAnalysis with maximum suppression
-            self.face_app = FaceAnalysis(
-                name="buffalo_l",
-                providers=["CPUExecutionProvider"],
-                session_options=so
-            )
-            self.face_app.prepare(ctx_id=0, det_size=(640, 640))
-            
-            # Load other components
-            self.device = DEVICE
-            self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
-            self.model = MultimodalEmotionRecognition(num_classes=NUM_CLASSES).to(self.device)
-            self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-            self.model.eval()
+    def extract_text_from_audio(self, audio_path):
+        """
+        Extract text from an audio file using Whisper.
+        """
+        try:
+            # Load and transcribe audio
+            result = self.whisper_model.transcribe(audio_path, language="en")  # Specify language if known
+            return result["text"].strip()
+        except Exception as e:
+            print(f"Error transcribing audio: {str(e)}")
+            return ""  # Return empty string on failure
         
     def extract_audio_from_video(self, video_path, output_dir="temp_audio"):
+        # Existing code
         if output_dir is None:
             output_dir = os.path.join(get_base_path(), "temp_audio")
         os.makedirs(output_dir, exist_ok=True)
-        
         video_name = os.path.basename(video_path).split('.')[0]
         audio_path = os.path.join(output_dir, f"{video_name}.wav")
         
         if not os.path.exists(audio_path):
-            # Method 1: Try using librosa first
             try:
-                print(f"Attempting audio extraction with librosa from {video_path}")
                 y, sr = librosa.load(video_path, sr=16000, mono=True)
                 import soundfile as sf
                 sf.write(audio_path, y, sr)
-                print(f"Successfully extracted audio with librosa to {audio_path}")
-                return audio_path
             except Exception as e:
-                print(f"Librosa extraction failed: {str(e)}")
-                
-            # Method 2: If librosa fails, try PyAV
-            try:
-                import av
-                
-                print(f"Extracting audio using PyAV from {video_path}")
-                input_container = av.open(video_path)
-                
-                # Find the first audio stream
-                audio_stream = next((s for s in input_container.streams if s.type == 'audio'), None)
-                
-                if audio_stream is None:
-                    raise RuntimeError("No audio stream found in the video file")
-                
-                # Create resampler
-                resampler = av.audio.resampler.AudioResampler(
-                    format='s16', 
-                    layout='mono', 
-                    rate=16000
-                )
-                
-                # Open output file
-                output_container = av.open(audio_path, mode='w')
-                output_stream = output_container.add_stream('pcm_s16le', rate=16000)
-                
-                # Decode audio frames and encode to output
-                for frame in input_container.decode(audio_stream):
-                    # Resample if needed
-                    if frame.sample_rate != 16000 or frame.layout.name != 'mono':
-                        frames = resampler.resample(frame)
-                    else:
-                        frames = [frame]
-                    
-                    # Encode and mux
-                    for frame in frames:
-                        for packet in output_stream.encode(frame):
-                            output_container.mux(packet)
-                
-                # Flush encoder
-                for packet in output_stream.encode(None):
-                    output_container.mux(packet)
-                
-                # Close files
-                output_container.close()
-                input_container.close()
-                
-                print(f"Successfully extracted audio with PyAV to {audio_path}")
-                return audio_path
-                
-            except Exception as e:
-                print(f"PyAV audio extraction failed: {str(e)}")
-                
-            # Method 3: If both methods fail, create a dummy audio file
-            try:
-                import numpy as np
-                import soundfile as sf
-                
-                # Create 1 second of silence at 16kHz
-                dummy_audio = np.zeros(16000, dtype=np.float32)
-                sf.write(audio_path, dummy_audio, 16000)
-                print(f"Created dummy silent audio file")
-                return audio_path
-                
-            except Exception as dummy_error:
-                raise RuntimeError(f"All audio extraction methods failed: {str(dummy_error)}")
-        
+                raise RuntimeError(f"Failed to extract audio from video: {str(e)}")
+
         return audio_path
     
     def extract_mel_spectrogram(self, video_path):
         audio_path = self.extract_audio_from_video(video_path)
         y, sr = librosa.load(audio_path, sr=16000)
-        
-        # Check if audio is silent (all zeros or very low amplitude)
-        if np.max(np.abs(y)) < 1e-6:
-            print("Warning: Audio is silent or near-silent, using synthetic spectrogram")
-            # Create a synthetic non-zero spectrogram instead of all zeros
-            mel_normalized = np.random.uniform(0.1, 0.2, (224, 224))
-        else:
-            # Generate mel spectrogram from audio
-            mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
-            mel_spec_db = librosa.amplitude_to_db(mel_spec, ref=np.max)
-            mel_resized = cv2.resize(mel_spec_db, (224, 224), interpolation=cv2.INTER_CUBIC)
-            
-            # Safe normalization to avoid division by zero
-            min_val = mel_resized.min()
-            max_val = mel_resized.max()
-            range_val = max_val - min_val
-            
-            # Check if range is too small (avoiding division by zero or near-zero)
-            if range_val < 1e-6:
-                print("Warning: Constant mel spectrogram detected, using synthetic values")
-                mel_normalized = np.random.uniform(0.1, 0.2, mel_resized.shape)
-            else:
-                mel_normalized = (mel_resized - min_val) / range_val
-        
-        # Create RGB version of the spectrogram
-        mel_rgb = np.stack([mel_normalized] * 3, axis=-1)
-        
-        # Convert to tensor and normalize
+        mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
+        mel_spec_db = librosa.amplitude_to_db(mel_spec, ref=np.max)
+        mel_resized = cv2.resize(mel_spec_db, (224, 224), interpolation=cv2.INTER_CUBIC)
+        mel_resized = (mel_resized - mel_resized.min()) / (mel_resized.max() - mel_resized.min())
+        mel_rgb = np.stack([mel_resized] * 3, axis=-1)
+        # mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32).permute(2, 0, 1)    
         mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32, device=self.device).permute(2, 0, 1)
-        mel_normalized_tensor = T.Normalize(
+        mel_normalized = T.Normalize(
             mean=[0.485, 0.456, 0.406],
             std=[0.229, 0.224, 0.225]
         )(mel_tensor)
-        
-        return mel_normalized_tensor
+        return mel_normalized
     
     def extract_video_frames(self, video_path, num_frames=10):
         cap = cv2.VideoCapture(video_path)
@@ -438,66 +401,72 @@ class EmotionRecognizer:
     
     def predict_emotion(self, video_path, text=""):
         # with suppress_all():
-            try:
-                # Process video
-                frames = self.extract_video_frames(video_path)
-                faces = self.process_faces(frames)
-                
-                if len(faces) > 0:
-                    video_tensor = torch.stack(faces)
-                else:
-                    video_tensor = torch.zeros((1, 3, 64, 64))
-                
-                num_faces = 4
-                if len(video_tensor) > num_faces:
-                    indices = torch.randperm(len(video_tensor))[:num_faces]
-                    video_tensor = video_tensor[indices]
-                elif len(video_tensor) < num_faces:
-                    padding = torch.zeros((num_faces - len(video_tensor), 3, 64, 64))
-                    video_tensor = torch.cat([video_tensor, padding])
-                
-                # Process audio
-                mel_spec = self.extract_mel_spectrogram(video_path)
-                
-                # Process text
-                input_ids, attention_mask = self.process_text(text)
-                
-                # Prepare inputs
-                video_input = video_tensor.unsqueeze(0).to(self.device)
-                audio_input = mel_spec.unsqueeze(0).to(self.device)
-                text_input_ids = input_ids.unsqueeze(0).to(self.device)
-                text_attention_mask = attention_mask.unsqueeze(0).to(self.device)
-                
-                # Run inference
-                with torch.no_grad():
-                    outputs = self.model(
-                        video_input, 
-                        audio_input, 
-                        text_input_ids, 
-                        text_attention_mask
-                    )
-                
-                # Get predictions
-                probabilities = outputs.squeeze().cpu().numpy()
-                predicted_class = np.argmax(probabilities)
-                emotion = EMOTION_LABELS[predicted_class]
-                
-                # Format results
-                results = {
-                    "emotion": emotion,
-                    "confidence": float(probabilities[predicted_class]),
-                    "probabilities": {label: float(prob) for label, prob in zip(EMOTION_LABELS, probabilities)},
-                    "timestamp": datetime.now().isoformat(),
-                    "video_path": video_path
-                }
-                
-                return results
-                
-            except Exception as e:
-                return {
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                }
+        try:
+            # Process video
+            frames = self.extract_video_frames(video_path)
+            faces = self.process_faces(frames)
+            
+            if len(faces) > 0:
+                video_tensor = torch.stack(faces)
+            else:
+                video_tensor = torch.zeros((1, 3, 64, 64))
+            
+            num_faces = 4
+            if len(video_tensor) > num_faces:
+                indices = torch.randperm(len(video_tensor))[:num_faces]
+                video_tensor = video_tensor[indices]
+            elif len(video_tensor) < num_faces:
+                padding = torch.zeros((num_faces - len(video_tensor), 3, 64, 64))
+                video_tensor = torch.cat([video_tensor, padding])
+            
+            # Process audio
+            mel_spec = self.extract_mel_spectrogram(video_path)
+            # Extract text from audio
+            audio_path = self.extract_audio_from_video(video_path)
+            extracted_text = self.extract_text_from_audio(audio_path)
+            # Combine provided text (if any) with extracted text
+            combined_text = f"{text} {extracted_text}".strip() if text else extracted_text
+            
+            # Process text (use combined_text)
+            input_ids, attention_mask = self.process_text(combined_text)
+            
+            # Prepare inputs
+            video_input = video_tensor.unsqueeze(0).to(self.device)
+            audio_input = mel_spec.unsqueeze(0).to(self.device)
+            text_input_ids = input_ids.unsqueeze(0).to(self.device)
+            text_attention_mask = attention_mask.unsqueeze(0).to(self.device)
+            
+            # Run inference
+            with torch.no_grad():
+                outputs = self.model(
+                    video_input, 
+                    audio_input, 
+                    text_input_ids, 
+                    text_attention_mask
+                )
+            
+            # Get predictions
+            probabilities = outputs.squeeze().cpu().numpy()
+            predicted_class = np.argmax(probabilities)
+            emotion = EMOTION_LABELS[predicted_class]
+            
+            # Format results
+            results = {
+                "emotion": emotion,
+                "confidence": float(probabilities[predicted_class]),
+                "probabilities": {label: float(prob) for label, prob in zip(EMOTION_LABELS, probabilities)},
+                "timestamp": datetime.now().isoformat(),
+                "video_path": video_path,
+                "transcribed_text": extracted_text  # Include transcribed text in results
+            }
+            
+            return results
+            
+        except Exception as e:
+            return {
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
 
 def main(video_path, text=''):
     # Initialize recognizer with suppressed output
@@ -513,13 +482,12 @@ def main(video_path, text=''):
         return
     
     result = recognizer.predict_emotion(video_path, text)
-    return result
+    return json.dumps(result, indent=2)
 
 if __name__ == "__main__":
     # Example usage with your specific video path
-    video_path = r"C:\Users\sarse\Downloads\GMT20250424-140111_Clip_Damir Sarsengaliyev's Clip 04_24_2025.mp4"
-    if os.path.exists(video_path):
-        print("_______CHECKING_________")
+    video_path = "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/splits/videoplayback/videoplayback_part15.mp4"
+    # video_path = '/Users/alikhanbaidussenov/Downloads/Movie on 25.04.2025 at 07.21.mp4'
     sample_text = ""  # Optional text input
     
     try:
@@ -534,7 +502,6 @@ if __name__ == "__main__":
         # Pretty-print results
         print("\nEmotion Recognition Results:")
         print("-" * 50)
-        print('________',result)
         print(f"Predicted Emotion: {result['emotion']} (Confidence: {result['confidence']:.2%})")
         print("\nDetailed Probabilities:")
         for emotion, prob in result['probabilities'].items():
