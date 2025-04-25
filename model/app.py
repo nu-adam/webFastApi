@@ -27,16 +27,15 @@ def get_base_path():
     return base_path
 
 BASE_PATH = get_base_path()
-MODEL_CHECKPOINT = os.path.join(BASE_PATH, "checkpoints", "trial_1_best_model.pth")
+MODEL_CHECKPOINT = os.path.join(BASE_PATH, "checkpoints", "best_model_epoch13_6807.pth")
 
 # Configuration
-NUM_CLASSES = 6  # Update based on your model
+NUM_CLASSES = 4  # Update based on your model
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
 # Emotion labels (update based on your training)
 EMOTION_LABELS = [
-    "neutral", "anger", "sadness", 
-    "frustration", "excited", "happiness"
+    "anger", "happiness", "neutral", "sadness",
 ]
 
 # # Suppressing Logging:
@@ -79,12 +78,20 @@ class TransformerEncoder(nn.Module):
 class ProjectionNetwork(nn.Module):
     def __init__(self, input_dim=512, output_dim=256):
         super(ProjectionNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_dim, output_dim)
+        self.fc1 = nn.Linear(input_dim, input_dim // 2)
         self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(input_dim // 2, output_dim)
+        self.norm = nn.LayerNorm(output_dim)
+        nn.init.xavier_uniform_(self.fc1.weight)
+        nn.init.zeros_(self.fc1.bias)
+        nn.init.xavier_uniform_(self.fc2.weight)
+        nn.init.zeros_(self.fc2.bias)
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu1(x)
+        x = self.fc2(x)
+        x = self.norm(x)
         return x
 
 class AudioEncoder(nn.Module):
