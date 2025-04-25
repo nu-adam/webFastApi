@@ -1,0 +1,494 @@
+{
+  "video_id": "1",
+  "clips": [
+    {
+      "emotion": "sadness",
+      "confidence": 0.9795215725898743,
+      "probabilities": {
+        "anger": 0.003823487553745508,
+        "happiness": 0.005107192322611809,
+        "neutral": 0.011547699570655823,
+        "sadness": 0.9795215725898743
+      },
+      "transcribed_text": "My parents, but things are not being good too early.",
+      "start_time": 0.0,
+      "end_time": 15.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part1.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part1.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.7194103598594666,
+      "probabilities": {
+        "anger": 0.022420136258006096,
+        "happiness": 0.04228987544775009,
+        "neutral": 0.7194103598594666,
+        "sadness": 0.2158796787261963
+      },
+      "transcribed_text": "Anyway.",
+      "start_time": 15.0,
+      "end_time": 16.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part2.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part2.wav"
+    },
+    {
+      "emotion": "sadness",
+      "confidence": 0.9845288395881653,
+      "probabilities": {
+        "anger": 0.002715534996241331,
+        "happiness": 0.005143856164067984,
+        "neutral": 0.007611717097461224,
+        "sadness": 0.9845288395881653
+      },
+      "transcribed_text": "I was expecting him at office 20 minutes ago.",
+      "start_time": 16.0,
+      "end_time": 21.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part3.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part3.wav"
+    },
+    {
+      "emotion": "anger",
+      "confidence": 0.8375374674797058,
+      "probabilities": {
+        "anger": 0.8375374674797058,
+        "happiness": 0.007054133806377649,
+        "neutral": 0.14878429472446442,
+        "sadness": 0.006624104920774698
+      },
+      "transcribed_text": "Really?",
+      "start_time": 21.0,
+      "end_time": 22.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part4.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part4.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.4898989200592041,
+      "probabilities": {
+        "anger": 0.42716819047927856,
+        "happiness": 0.04751405864953995,
+        "neutral": 0.4898989200592041,
+        "sadness": 0.03541883826255798
+      },
+      "transcribed_text": "That's odd because I had no intention of beating your office 20 minutes ago.",
+      "start_time": 22.0,
+      "end_time": 25.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part5.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part5.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.9245427846908569,
+      "probabilities": {
+        "anger": 0.018885768949985504,
+        "happiness": 0.024065284058451653,
+        "neutral": 0.9245427846908569,
+        "sadness": 0.032506123185157776
+      },
+      "transcribed_text": "What do you think we have nothing to talk about?",
+      "start_time": 25.0,
+      "end_time": 28.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part6.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part6.wav"
+    },
+    {
+      "emotion": "sadness",
+      "confidence": 0.9806005358695984,
+      "probabilities": {
+        "anger": 0.0040741292759776115,
+        "happiness": 0.005390130449086428,
+        "neutral": 0.009935276582837105,
+        "sadness": 0.9806005358695984
+      },
+      "transcribed_text": "No, I just can't think of anything.",
+      "start_time": 28.0,
+      "end_time": 31.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part7.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part7.wav"
+    },
+    {
+      "emotion": "happiness",
+      "confidence": 0.9726056456565857,
+      "probabilities": {
+        "anger": 0.0038010673597455025,
+        "happiness": 0.9726056456565857,
+        "neutral": 0.0060451701283454895,
+        "sadness": 0.01754811406135559
+      },
+      "transcribed_text": "I'd be interested.",
+      "start_time": 28.0,
+      "end_time": 31.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part8.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part8.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.8010179996490479,
+      "probabilities": {
+        "anger": 0.13148175179958344,
+        "happiness": 0.042187370359897614,
+        "neutral": 0.8010179996490479,
+        "sadness": 0.025312887504696846
+      },
+      "transcribed_text": "I signed your paychecks.",
+      "start_time": 31.0,
+      "end_time": 33.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part9.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part9.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.8827177286148071,
+      "probabilities": {
+        "anger": 0.02048230543732643,
+        "happiness": 0.024630270898342133,
+        "neutral": 0.8827177286148071,
+        "sadness": 0.07216963171958923
+      },
+      "transcribed_text": "I have tenure.",
+      "start_time": 33.0,
+      "end_time": 35.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part10.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part10.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.7354502081871033,
+      "probabilities": {
+        "anger": 0.20307883620262146,
+        "happiness": 0.034454621374607086,
+        "neutral": 0.7354502081871033,
+        "sadness": 0.027016380801796913
+      },
+      "transcribed_text": "Once you get a red my chain, stop me from leaving.",
+      "start_time": 35.0,
+      "end_time": 38.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part11.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part11.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.9251260161399841,
+      "probabilities": {
+        "anger": 0.012378585524857044,
+        "happiness": 0.027188371866941452,
+        "neutral": 0.9251260161399841,
+        "sadness": 0.03530701994895935
+      },
+      "transcribed_text": "Well, that would be true now, wouldn't it?",
+      "start_time": 38.0,
+      "end_time": 41.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part12.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part12.wav"
+    },
+    {
+      "emotion": "anger",
+      "confidence": 0.8643189072608948,
+      "probabilities": {
+        "anger": 0.8643189072608948,
+        "happiness": 0.00887008011341095,
+        "neutral": 0.1203993409872055,
+        "sadness": 0.006411710288375616
+      },
+      "transcribed_text": "I can still fire you if you're not doing a job.",
+      "start_time": 41.0,
+      "end_time": 43.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part13.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part13.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.7586692571640015,
+      "probabilities": {
+        "anger": 0.03958708420395851,
+        "happiness": 0.15530674159526825,
+        "neutral": 0.7586692571640015,
+        "sadness": 0.04643698409199715
+      },
+      "transcribed_text": "I mean, you're from 95.",
+      "start_time": 43.0,
+      "end_time": 45.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part14.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part14.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.4907779395580292,
+      "probabilities": {
+        "anger": 0.36493101716041565,
+        "happiness": 0.09902992099523544,
+        "neutral": 0.4907779395580292,
+        "sadness": 0.045261137187480927
+      },
+      "transcribed_text": "Your billions are virtually non-existent.",
+      "start_time": 45.0,
+      "end_time": 47.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part15.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part15.wav"
+    },
+    {
+      "emotion": "happiness",
+      "confidence": 0.9533050656318665,
+      "probabilities": {
+        "anger": 0.005619650240987539,
+        "happiness": 0.9533050656318665,
+        "neutral": 0.03660712391138077,
+        "sadness": 0.00446824636310339
+      },
+      "transcribed_text": "Rough here.",
+      "start_time": 47.0,
+      "end_time": 48.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part16.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part16.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.9200974702835083,
+      "probabilities": {
+        "anger": 0.032152868807315826,
+        "happiness": 0.03349662199616432,
+        "neutral": 0.9200974702835083,
+        "sadness": 0.014253105968236923
+      },
+      "transcribed_text": "You would no request for your consults.",
+      "start_time": 48.0,
+      "end_time": 50.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part17.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part17.wav"
+    },
+    {
+      "emotion": "sadness",
+      "confidence": 0.9623525738716125,
+      "probabilities": {
+        "anger": 0.0031864969059824944,
+        "happiness": 0.006296016275882721,
+        "neutral": 0.028164900839328766,
+        "sadness": 0.9623525738716125
+      },
+      "transcribed_text": "I call back.",
+      "start_time": 50.0,
+      "end_time": 54.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part18.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part18.wav"
+    },
+    {
+      "emotion": "sadness",
+      "confidence": 0.8482100963592529,
+      "probabilities": {
+        "anger": 0.009896933101117611,
+        "happiness": 0.012069817632436752,
+        "neutral": 0.12982310354709625,
+        "sadness": 0.8482100963592529
+      },
+      "transcribed_text": "Sometimes I'm a stile.",
+      "start_time": 50.0,
+      "end_time": 54.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part19.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part19.wav"
+    },
+    {
+      "emotion": "anger",
+      "confidence": 0.9055607914924622,
+      "probabilities": {
+        "anger": 0.9055607914924622,
+        "happiness": 0.008542319759726524,
+        "neutral": 0.08045981079339981,
+        "sadness": 0.005437047220766544
+      },
+      "transcribed_text": "You're six years behind in your obligations to the clinic.",
+      "start_time": 54.0,
+      "end_time": 56.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part20.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part20.wav"
+    },
+    {
+      "emotion": "anger",
+      "confidence": 0.6736314296722412,
+      "probabilities": {
+        "anger": 0.6736314296722412,
+        "happiness": 0.02339412458240986,
+        "neutral": 0.29065752029418945,
+        "sadness": 0.012316970154643059
+      },
+      "transcribed_text": "You see, I was right.",
+      "start_time": 57.0,
+      "end_time": 58.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part21.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part21.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.7490030527114868,
+      "probabilities": {
+        "anger": 0.09076809138059616,
+        "happiness": 0.0712905004620552,
+        "neutral": 0.7490030527114868,
+        "sadness": 0.08893835544586182
+      },
+      "transcribed_text": "It's just not interesting.",
+      "start_time": 58.0,
+      "end_time": 60.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part22.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part22.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.748498797416687,
+      "probabilities": {
+        "anger": 0.1296388804912567,
+        "happiness": 0.07458093017339706,
+        "neutral": 0.748498797416687,
+        "sadness": 0.04728143289685249
+      },
+      "transcribed_text": "Six years after three weeks, you're only better than four months.",
+      "start_time": 60.0,
+      "end_time": 63.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part23.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part23.wav"
+    },
+    {
+      "emotion": "anger",
+      "confidence": 0.8812961578369141,
+      "probabilities": {
+        "anger": 0.8812961578369141,
+        "happiness": 0.011184176430106163,
+        "neutral": 0.10060317814350128,
+        "sadness": 0.006916508544236422
+      },
+      "transcribed_text": "It's five o'clock.",
+      "start_time": 63.0,
+      "end_time": 64.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part24.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part24.wav"
+    },
+    {
+      "emotion": "sadness",
+      "confidence": 0.9741365909576416,
+      "probabilities": {
+        "anger": 0.005479983054101467,
+        "happiness": 0.00627089524641633,
+        "neutral": 0.014112441800534725,
+        "sadness": 0.9741365909576416
+      },
+      "transcribed_text": "I'm going home.",
+      "start_time": 64.0,
+      "end_time": 67.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part25.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part25.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.9340335726737976,
+      "probabilities": {
+        "anger": 0.020569805055856705,
+        "happiness": 0.03241491690278053,
+        "neutral": 0.9340335726737976,
+        "sadness": 0.012981679290533066
+      },
+      "transcribed_text": "You know, the only reason I hope to find you is your reputation is still worth something with this hospital.",
+      "start_time": 67.0,
+      "end_time": 71.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part26.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part26.wav"
+    },
+    {
+      "emotion": "anger",
+      "confidence": 0.6222688555717468,
+      "probabilities": {
+        "anger": 0.6222688555717468,
+        "happiness": 0.16847559809684753,
+        "neutral": 0.1864268034696579,
+        "sadness": 0.022828765213489532
+      },
+      "transcribed_text": "Excellent.",
+      "start_time": 71.0,
+      "end_time": 72.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part27.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part27.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.7141755223274231,
+      "probabilities": {
+        "anger": 0.03439150005578995,
+        "happiness": 0.23162174224853516,
+        "neutral": 0.7141755223274231,
+        "sadness": 0.019811205565929413
+      },
+      "transcribed_text": "We have a point of agreement.",
+      "start_time": 72.0,
+      "end_time": 73.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part28.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part28.wav"
+    },
+    {
+      "emotion": "anger",
+      "confidence": 0.9499118328094482,
+      "probabilities": {
+        "anger": 0.9499118328094482,
+        "happiness": 0.011721993796527386,
+        "neutral": 0.0311095230281353,
+        "sadness": 0.007256641052663326
+      },
+      "transcribed_text": "You won't fire me.",
+      "start_time": 73.0,
+      "end_time": 74.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part29.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part29.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.8734194040298462,
+      "probabilities": {
+        "anger": 0.057050302624702454,
+        "happiness": 0.04130280017852783,
+        "neutral": 0.8734194040298462,
+        "sadness": 0.02822745405137539
+      },
+      "transcribed_text": "Your reputation won't last long if you don't do your job.",
+      "start_time": 74.0,
+      "end_time": 77.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part30.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part30.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.9329248070716858,
+      "probabilities": {
+        "anger": 0.021735701709985733,
+        "happiness": 0.025462541729211807,
+        "neutral": 0.9329248070716858,
+        "sadness": 0.01987687684595585
+      },
+      "transcribed_text": "All I want is for you to do your job.",
+      "start_time": 77.0,
+      "end_time": 79.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part31.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part31.wav"
+    },
+    {
+      "emotion": "neutral",
+      "confidence": 0.8670192360877991,
+      "probabilities": {
+        "anger": 0.01824065111577511,
+        "happiness": 0.03368697687983513,
+        "neutral": 0.8670192360877991,
+        "sadness": 0.08105313777923584
+      },
+      "transcribed_text": "But as the philosopher Jagger once said, you can't always get what you want.",
+      "start_time": 79.0,
+      "end_time": 85.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part32.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part32.wav"
+    }
+  ],
+  "emotion_scores": {
+    "happiness": 0.10143608099315315,
+    "anger": 0.23181513130839448,
+    "neutral": 0.4584084681700915,
+    "sadness": 0.20834032019774895
+  },
+  "transcription": "My parents, but things are not being good too early. Anyway. I was expecting him at office 20 minutes ago. Really? That's odd because I had no intention of beating your office 20 minutes ago. What do you think we have nothing to talk about? No, I just can't think of anything. I'd be interested. I signed your paychecks. I have tenure. Once you get a red my chain, stop me from leaving. Well, that would be true now, wouldn't it? I can still fire you if you're not doing a job. I mean, you're from 95. Your billions are virtually non-existent. Rough here. You would no request for your consults. I call back. Sometimes I'm a stile. You're six years behind in your obligations to the clinic. You see, I was right. It's just not interesting. Six years after three weeks, you're only better than four months. It's five o'clock. I'm going home. You know, the only reason I hope to find you is your reputation is still worth something with this hospital. Excellent. We have a point of agreement. You won't fire me. Your reputation won't last long if you don't do your job. All I want is for you to do your job. But as the philosopher Jagger once said, you can't always get what you want.",
+  "processed_clips": 32,
+  "errors": []
+}

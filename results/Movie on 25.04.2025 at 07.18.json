@@ -1,0 +1,29 @@
+{
+  "video_id": "1",
+  "clips": [
+    {
+      "emotion": "sadness",
+      "confidence": 0.9589640498161316,
+      "probabilities": {
+        "anger": 0.005541177932173014,
+        "happiness": 0.021176811307668686,
+        "neutral": 0.014317911118268967,
+        "sadness": 0.9589640498161316
+      },
+      "transcribed_text": "Virtua",
+      "start_time": 0.0,
+      "end_time": 2.12,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/Movie on 25.04.2025 at 07.18/Movie on 25.04.2025 at 07.18_part1.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/Movie on 25.04.2025 at 07.18/Movie on 25.04.2025 at 07.18_part1.wav"
+    }
+  ],
+  "emotion_scores": {
+    "happiness": 0.021176811307668686,
+    "anger": 0.005541177932173014,
+    "neutral": 0.014317911118268967,
+    "sadness": 0.9589640498161316
+  },
+  "transcription": "Virtua",
+  "processed_clips": 1,
+  "errors": []
+}

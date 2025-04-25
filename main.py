@@ -52,21 +52,24 @@ init_auth(app)
 
 # Directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'Uploads')
 VIDEO_SPLITS_FOLDER = os.path.join(BASE_DIR, 'video_splits')
 AUDIO_SPLITS_FOLDER = os.path.join(BASE_DIR, 'audio_splits')
 TEXT_SPLITS_FOLDER = os.path.join(BASE_DIR, 'text_splits')
+RESULTS_FOLDER = os.path.join(BASE_DIR, 'results')
 
 # Create directories
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(VIDEO_SPLITS_FOLDER, exist_ok=True)
 os.makedirs(AUDIO_SPLITS_FOLDER, exist_ok=True)
 os.makedirs(TEXT_SPLITS_FOLDER, exist_ok=True)
+os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['VIDEO_SPLITS_FOLDER'] = VIDEO_SPLITS_FOLDER
 app.config['AUDIO_SPLITS_FOLDER'] = AUDIO_SPLITS_FOLDER
 app.config['TEXT_SPLITS_FOLDER'] = TEXT_SPLITS_FOLDER
+app.config['RESULTS_FOLDER'] = RESULTS_FOLDER
 
 # Create database tables
 with app.app_context():
@@ -91,9 +94,9 @@ def extract_audio_from_video(video_path, output_path):
         logger.info(f"Extracting audio from {video_path} to {output_path}")
         subprocess.run([
             'ffmpeg', '-y', '-i', video_path,
-            '-ac', '1', '-ar', '16000',  # mono, 16kHz
-            '-acodec', 'pcm_s16le',      # WAV format
-            '-loglevel', 'error',        # Only show errors
+            '-ac', '1', '-ar', '16000',
+            '-acodec', 'pcm_s16le',
+            '-loglevel', 'error',
             output_path
         ], check=True)
         return output_path
@@ -112,17 +115,14 @@ def transcribe_and_segment(video_path):
             f"temp_{os.path.basename(video_path)}.wav"
         )
         
-        # Extract audio
         extract_audio_from_video(video_path, audio_path)
         logger.info(f"Audio extracted to {audio_path}")
 
-        # Transcribe
         logger.info("Starting transcription...")
         result = whisper_model.transcribe(audio_path, language="en")
         segments = result["segments"]
         logger.info(f"Transcription complete: {len(segments)} segments")
 
-        # Segment into sentences
         sentences = []
         current_sentence = ""
         start_time = None
@@ -150,7 +150,6 @@ def transcribe_and_segment(video_path):
                     current_sentence = ""
                     start_time = None
 
-        # Handle remaining partial sentence
         if current_sentence.strip():
             sentences.append({
                 "text": current_sentence.strip(),
@@ -177,8 +176,7 @@ def split_video_by_timestamps(video_path, output_dir, base_name, sentences):
         if not cap.isOpened():
             raise Exception(f"Could not open video file {video_path}")
 
-        # Get video properties
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0  # Fallback to 30fps
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -189,16 +187,12 @@ def split_video_by_timestamps(video_path, output_dir, base_name, sentences):
             end_frame = int(sentence["end_time"] * fps)
             output_path = os.path.join(output_dir, f"{base_name}_part{idx}.mp4")
 
-            # Set start position
             cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-
-            # Create writer
             writer = cv2.VideoWriter(
                 output_path, fourcc, fps, (width, height))
             if not writer.isOpened():
                 raise Exception(f"Could not create video writer for {output_path}")
 
-            # Write frames
             for _ in range(start_frame, end_frame):
                 ret, frame = cap.read()
                 if not ret:
@@ -344,9 +338,10 @@ def upload_file(current_user):
                 'result': {
                     "video_id": new_video.video_id,
                     "clips_created": len(sentences),
-                    "video_split_folder": video_split_dir, # Changed from video_split_folder
+                    "video_split_folder": video_split_dir,
                     "audio_split_folder": audio_split_dir,
-                    "text_split_path": text_split_path
+                    "text_split_path": text_split_path,
+                    "results_path": os.path.join(app.config['RESULTS_FOLDER'], f"{base_name}.json")
                 }
             })
 
@@ -391,6 +386,21 @@ def analyze_clips(current_user):
         
         if not clip_data:
             return jsonify({"error": "No clips found in text data"}), 400
+        
+        # Initialize JSON result file
+        base_name = os.path.basename(video_split_folder)
+        result_path = os.path.join(app.config['RESULTS_FOLDER'], f"{base_name}.json")
+        analysis_results = {
+            "video_id": video_id,
+            "clips": [],
+            "emotion_scores": {},
+            "transcription": "",
+            "processed_clips": 0,
+            "errors": []
+        }
+        with open(result_path, 'w') as f:
+            json.dump(analysis_results, f, indent=2)
+
     except Exception as e:
         return jsonify({"error": f"Error reading text data: {str(e)}"}), 500
 
@@ -406,8 +416,6 @@ def analyze_clips(current_user):
                     video_path = clip["video_clip"]
                     audio_path = clip["audio_clip"]
                     text = clip["sentence"]
-                    
-                    # Get timestamps if present
                     start_time = clip.get("start_time")
                     end_time = clip.get("end_time")
                     
@@ -429,8 +437,20 @@ def analyze_clips(current_user):
                         'emotion': result.get('emotion', max_emotion),
                         'confidence': result.get('confidence', probabilities[max_emotion]),
                         'probabilities': probabilities,
-                        'transcribed_text': text
+                        'transcribed_text': text,
+                        'start_time': start_time,
+                        'end_time': end_time,
+                        'video_clip_path': video_path,
+                        'audio_clip_path': audio_path
                     }
+                    
+                    # Update JSON file
+                    with open(result_path, 'r+') as f:
+                        data = json.load(f)
+                        data['clips'].append(formatted_result)
+                        f.seek(0)
+                        json.dump(data, f, indent=2)
+                        f.truncate()
                     
                     for emotion in emotion_totals:
                         if emotion in probabilities:
@@ -451,6 +471,13 @@ def analyze_clips(current_user):
 
                 except Exception as e:
                     errors.append(f"Clip {idx}: {str(e)}")
+                    with open(result_path, 'r+') as f:
+                        data = json.load(f)
+                        data['errors'].append(f"Clip {idx}: {str(e)}")
+                        f.seek(0)
+                        json.dump(data, f, indent=2)
+                        f.truncate()
+                    
                     yield f"data: {json.dumps({
                         'current': idx,
                         'total': len(clip_data),
@@ -465,6 +492,16 @@ def analyze_clips(current_user):
 
             final_scores = {e: t/processed_clips if processed_clips > 0 else 0.0 for e, t in emotion_totals.items()}
             
+            # Update final results in JSON
+            with open(result_path, 'r+') as f:
+                data = json.load(f)
+                data['emotion_scores'] = final_scores
+                data['processed_clips'] = processed_clips
+                data['transcription'] = " ".join(transcriptions)
+                f.seek(0)
+                json.dump(data, f, indent=2)
+                f.truncate()
+            
             if video_id:
                 try:
                     video = Video.query.get(int(video_id))
@@ -472,6 +509,7 @@ def analyze_clips(current_user):
                         for emotion, score in final_scores.items():
                             setattr(video, emotion, score)
                         video.transcription = " ".join(transcriptions)
+                        video.results_path = result_path
                         db.session.commit()
                 except Exception as e:
                     print(f"Database update error: {str(e)}")
@@ -480,11 +518,19 @@ def analyze_clips(current_user):
                 'emotion_scores': final_scores,
                 'processed_clips': processed_clips,
                 'errors': errors,
-                'transcription': " ".join(transcriptions)
+                'transcription': " ".join(transcriptions),
+                'results_path': result_path
             })}\n\n"
 
         except Exception as e:
             errors.append(f"Analysis failed: {str(e)}")
+            with open(result_path, 'r+') as f:
+                data = json.load(f)
+                data['errors'].append(f"Analysis failed: {str(e)}")
+                f.seek(0)
+                json.dump(data, f, indent=2)
+                f.truncate()
+            
             yield f"data: {json.dumps({
                 'error': f"Analysis failed: {str(e)}",
                 'current': processed_clips,
@@ -510,7 +556,28 @@ def get_user_videos(current_user):
     video_list = []
     for video in videos:
         analysis_data = None
-        if any([video.happiness, video.anger, video.neutral, video.sadness]):
+        base_name = os.path.splitext(video.title)[0]
+        results_path = os.path.join(app.config['RESULTS_FOLDER'], f"{base_name}.json")
+        
+        # Check if results file exists
+        if os.path.exists(results_path):
+            try:
+                with open(results_path, 'r') as f:
+                    detailed_results = json.load(f)
+                
+                analysis_data = {
+                    'analysis_date': video.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'average_emotions': {
+                        'happiness': detailed_results.get('emotion_scores', {}).get('happiness', video.happiness or 0),
+                        'anger': detailed_results.get('emotion_scores', {}).get('anger', video.anger or 0),
+                        'neutral': detailed_results.get('emotion_scores', {}).get('neutral', video.neutral or 0),
+                        'sadness': detailed_results.get('emotion_scores', {}).get('sadness', video.sadness or 0)
+                    },
+                    'detailed_results': detailed_results
+                }
+            except Exception as e:
+                logger.error(f"Error reading results file {results_path}: {str(e)}")
+        elif any([video.happiness, video.anger, video.neutral, video.sadness]):
             analysis_data = {
                 'analysis_date': video.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'average_emotions': {
@@ -530,42 +597,6 @@ def get_user_videos(current_user):
         })
     
     return jsonify({"videos": video_list})
-
-# @app.route('/video/< сопровожает video_id>/csv', methods=['GET'])
-# @token_required
-# def download_video_csv(current_user, video_id):
-#     video = Video.query.get(int(video_id))
-    
-#     if not video or video.user_id != current_user.user_id:
-#         return jsonify({"error": "Video not found or unauthorized"}), 404
-    
-#     if not any([video.happiness, video.anger, video.neutral, video.sadness]):
-#         return jsonify({"error": "No analysis data available"}), 404
-    
-#     import csv
-#     import io
-    
-#     output = io.StringIO()
-#     writer = csv.writer(output)
-    
-#     writer.writerow(['Emotion', 'Percentage'])
-    
-#     emotions = {
-#         'Happiness': video.happiness or 0,
-#         'Anger': video.anger or 0,
-#         'Neutral': video.neutral or 0,
-#         'Sadness': video.sadness or 0
-#     }
-    
-#     for emotion, value in emotions.items():
-#         writer.writerow([emotion, f"{value*100:.2f}%"])
-    
-#     output.seek(0)
-#     return Response(
-#         output.getvalue(),
-#         mimetype="text/csv",
-#         headers={"Content-Disposition": f"attachment;filename={video.title}_analysis.csv"}
-#     )
 
 if __name__ == '__main__':
     app.run(debug=True)

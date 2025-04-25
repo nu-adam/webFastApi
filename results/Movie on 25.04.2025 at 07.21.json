@@ -1,0 +1,44 @@
+{
+  "video_id": "2",
+  "clips": [
+    {
+      "emotion": "sadness",
+      "confidence": 0.9665756225585938,
+      "probabilities": {
+        "anger": 0.003105508629232645,
+        "happiness": 0.021564625203609467,
+        "neutral": 0.00875423289835453,
+        "sadness": 0.9665756225585938
+      },
+      "transcribed_text": "This summer, Rapuns and streamed parallel phone slaps.",
+      "start_time": 0.0,
+      "end_time": 3.88,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/Movie on 25.04.2025 at 07.21/Movie on 25.04.2025 at 07.21_part1.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/Movie on 25.04.2025 at 07.21/Movie on 25.04.2025 at 07.21_part1.wav"
+    },
+    {
+      "emotion": "happiness",
+      "confidence": 0.771597683429718,
+      "probabilities": {
+        "anger": 0.01826529949903488,
+        "happiness": 0.771597683429718,
+        "neutral": 0.1778748780488968,
+        "sadness": 0.032262060791254044
+      },
+      "transcribed_text": "Institut Dagon",
+      "start_time": 3.88,
+      "end_time": 28.900000000000002,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/Movie on 25.04.2025 at 07.21/Movie on 25.04.2025 at 07.21_part2.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/Movie on 25.04.2025 at 07.21/Movie on 25.04.2025 at 07.21_part2.wav"
+    }
+  ],
+  "emotion_scores": {
+    "happiness": 0.39658115431666374,
+    "anger": 0.010685404064133763,
+    "neutral": 0.09331455547362566,
+    "sadness": 0.4994188416749239
+  },
+  "transcription": "This summer, Rapuns and streamed parallel phone slaps. Institut Dagon",
+  "processed_clips": 2,
+  "errors": []
+}

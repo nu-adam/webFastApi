@@ -1,0 +1,44 @@
+{
+  "video_id": "3",
+  "clips": [
+    {
+      "emotion": "neutral",
+      "confidence": 0.7537313103675842,
+      "probabilities": {
+        "anger": 0.011958491988480091,
+        "happiness": 0.028532428666949272,
+        "neutral": 0.7537313103675842,
+        "sadness": 0.2057778388261795
+      },
+      "transcribed_text": "I walk and the park.",
+      "start_time": 0.0,
+      "end_time": 4.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/Movie on 25.04.2025 at 21.22/Movie on 25.04.2025 at 21.22_part1.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/Movie on 25.04.2025 at 21.22/Movie on 25.04.2025 at 21.22_part1.wav"
+    },
+    {
+      "emotion": "sadness",
+      "confidence": 0.8568562269210815,
+      "probabilities": {
+        "anger": 0.00329666119068861,
+        "happiness": 0.13402898609638214,
+        "neutral": 0.005818028934299946,
+        "sadness": 0.8568562269210815
+      },
+      "transcribed_text": "I love eating dogs.",
+      "start_time": 6.0,
+      "end_time": 11.0,
+      "video_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/Movie on 25.04.2025 at 21.22/Movie on 25.04.2025 at 21.22_part2.mp4",
+      "audio_clip_path": "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/Movie on 25.04.2025 at 21.22/Movie on 25.04.2025 at 21.22_part2.wav"
+    }
+  ],
+  "emotion_scores": {
+    "happiness": 0.0812807073816657,
+    "anger": 0.007627576589584351,
+    "neutral": 0.3797746696509421,
+    "sadness": 0.5313170328736305
+  },
+  "transcription": "I walk and the park. I love eating dogs.",
+  "processed_clips": 2,
+  "errors": []
+}
