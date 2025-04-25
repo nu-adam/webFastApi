@@ -10,6 +10,9 @@ from flask_cors import CORS
 from model.models import db, User, Video
 from model.auth import init_auth, token_required
 import secrets
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from model.auth import GOOGLE_CLIENT_ID
 
 app = Flask(__name__)
 
@@ -164,11 +167,29 @@ def upload_file(current_user):
 
 @app.route('/analyze-clips', methods=['GET'])
 @token_required
-def analyze_clips(current_user):
+def analyze_clips(current_user=None):
     # Get split_folder from query parameters instead of JSON body
     split_folder = request.args.get('split_folder')
     video_id = request.args.get('video_id')
+    token = request.args.get('token')
     
+    if not current_user and token:
+        try:
+            # Verify token
+            idinfo = id_token.verify_oauth2_token(
+                token, 
+                google_requests.Request(), 
+                GOOGLE_CLIENT_ID
+            )
+            
+            # Get user
+            google_id = idinfo['sub']
+            current_user = User.query.filter_by(google_id=google_id).first()
+            
+            if not current_user:
+                return jsonify({"error": "Unauthorized: User not found"}), 401
+        except Exception as e:
+            return jsonify({"error": f"Authentication failed: {str(e)}"}), 401
     if not split_folder:
         return jsonify({"error": "No split_folder provided"}), 400
     
