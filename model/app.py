@@ -207,11 +207,11 @@ class TransformerFusion(nn.Module):
         return x
 
 class TransformerDecoder(nn.Module):
-    def __init__(self, embed_dim, num_classes, num_heads=4, num_layers=2, dropout=0.1): # , temperature=2.0):
+    def __init__(self, embed_dim, num_classes, num_heads=4, num_layers=2, dropout=0.1, temperature=2.0):
         super(TransformerDecoder, self).__init__()
         self.num_classes = num_classes
         self.hidden_dim = embed_dim
-        # self.temperature = temperature
+        self.temperature = temperature
         self.emotion_queries = nn.Parameter(torch.randn(num_classes, embed_dim))
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=embed_dim, nhead=num_heads, dim_feedforward=4*embed_dim, dropout=dropout, batch_first=True
@@ -231,7 +231,7 @@ class TransformerDecoder(nn.Module):
         # print('Decoder em_repr', emotion_representations)
         emotion_logits = self.fc_out(emotion_representations).squeeze(-1)
         # print('Decoder em_log', emotion_logits)
-        # emotion_logits = emotion_logits / self.temperature
+        emotion_logits = emotion_logits / self.temperature
         emotion_probs = torch.softmax(emotion_logits, dim=1)
         # print('Decoder em_prob', emotion_probs)
         return emotion_probs
@@ -486,7 +486,8 @@ def main(video_path, audio_path, text):
 if __name__ == "__main__":
     # Example usage with your specific video path
     # video_path = "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/splits/videoplayback/videoplayback_part15.mp4"
-    video_path = '/Users/alikhanbaidussenov/Pictures/Photo Booth Library/Pictures/Movie on 25.04.2025 at 16.38 #2.mov'
+    video_path = '/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/video_splits/videoplayback/videoplayback_part1.mp4'
+    audio_path = '/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/audio_splits/videoplayback/videoplayback_part1.wav'
     
     try:
         # Initialize recognizer (with suppressed output during init)
@@ -495,7 +496,7 @@ if __name__ == "__main__":
         
         # Process the video
         print(f"\nProcessing video: {video_path}...")
-        result = recognizer.predict_emotion(video_path)
+        result = recognizer.predict_emotion(video_path, audio_path,'My parents, but things are not being good too early.')
         
         # Pretty-print results
         print("\nEmotion Recognition Results:")

@@ -407,6 +407,10 @@ def analyze_clips(current_user):
                     audio_path = clip["audio_clip"]
                     text = clip["sentence"]
                     
+                    # Get timestamps if present
+                    start_time = clip.get("start_time")
+                    end_time = clip.get("end_time")
+                    
                     if not os.path.exists(video_path) or not os.path.exists(audio_path):
                         raise Exception(f"Clip files missing: {video_path} or {audio_path}")
                     
@@ -440,6 +444,8 @@ def analyze_clips(current_user):
                         'video_clip_path': video_path,
                         'audio_clip_path': audio_path,
                         'text': text,
+                        'start_time': start_time,
+                        'end_time': end_time,
                         'result': formatted_result
                     })}\n\n"
 
@@ -451,6 +457,8 @@ def analyze_clips(current_user):
                         'video_clip_path': video_path,
                         'audio_clip_path': audio_path,
                         'text': text,
+                        'start_time': clip.get('start_time'),
+                        'end_time': clip.get('end_time'),
                         'error': str(e)
                     })}\n\n"
                     continue
