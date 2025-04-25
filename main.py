@@ -386,29 +386,107 @@ def analyze_clips(current_user):
         }
     )
 
-@app.route('/videos', methods=['GET'])
+# @app.route('/videos', methods=['GET'])
+# @token_required
+# def get_user_videos(current_user):
+#     videos = Video.query.filter_by(user_id=current_user.user_id).order_by(Video.created_at.desc()).all()
+    
+#     video_list = []
+#     for video in videos:
+#         video_list.append({
+#             'id': video.video_id,
+#             'title': video.title,
+#             'description': video.description,
+#             'created_at': video.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+#             'emotions': {
+#                 'happiness': video.happiness,
+#                 'frustration': video.frustration,
+#                 'anger': video.anger,
+#                 'sadness': video.sadness,
+#                 'neutral': video.neutral,
+#                 'excited': video.excited
+#             }
+#         })
+    
+#     return jsonify({"videos": video_list})
+@app.route('/user/videos', methods=['GET'])
 @token_required
 def get_user_videos(current_user):
+    """Get all videos uploaded by the current user with their analysis data"""
     videos = Video.query.filter_by(user_id=current_user.user_id).order_by(Video.created_at.desc()).all()
     
     video_list = []
     for video in videos:
+        # Create analysis data object if analysis exists
+        analysis_data = None
+        if any([video.happiness, video.frustration, video.anger, 
+                video.sadness, video.neutral, video.excited]):
+            analysis_data = {
+                'analysis_date': video.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'average_emotions': {
+                    'happiness': video.happiness or 0,
+                    'frustration': video.frustration or 0,
+                    'anger': video.anger or 0,
+                    'sadness': video.sadness or 0,
+                    'neutral': video.neutral or 0,
+                    'excited': video.excited or 0
+                }
+            }
+        
         video_list.append({
             'id': video.video_id,
             'title': video.title,
             'description': video.description,
             'created_at': video.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'emotions': {
-                'happiness': video.happiness,
-                'frustration': video.frustration,
-                'anger': video.anger,
-                'sadness': video.sadness,
-                'neutral': video.neutral,
-                'excited': video.excited
-            }
+            'analysis_data': analysis_data
         })
     
     return jsonify({"videos": video_list})
+
+@app.route('/video/<int:video_id>/csv', methods=['GET'])
+@token_required
+def download_video_csv(current_user, video_id):
+    """Generate and download CSV data for a video analysis"""
+    video = Video.query.get(int(video_id))
+    
+    if not video or video.user_id != current_user.user_id:
+        return jsonify({"error": "Video not found or unauthorized"}), 404
+    
+    # Check if video has analysis data
+    if not any([video.happiness, video.frustration, video.anger, 
+               video.sadness, video.neutral, video.excited]):
+        return jsonify({"error": "No analysis data available"}), 404
+    
+    # Generate CSV data
+    import csv
+    import io
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Emotion', 'Percentage'])
+    
+    # Write data
+    emotions = {
+        'Happiness': video.happiness or 0,
+        'Frustration': video.frustration or 0,
+        'Anger': video.anger or 0,
+        'Sadness': video.sadness or 0,
+        'Neutral': video.neutral or 0,
+        'Excited': video.excited or 0
+    }
+    
+    for emotion, value in emotions.items():
+        writer.writerow([emotion, f"{value*100:.2f}%"])
+    
+    # Return CSV file
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename={video.title}_analysis.csv"}
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
