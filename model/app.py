@@ -506,7 +506,7 @@ def main(video_path, text=''):
         return
     
     result = recognizer.predict_emotion(video_path, text)
-    return json.dumps(result, indent=2)
+    return result
 
 if __name__ == "__main__":
     # Example usage with your specific video path

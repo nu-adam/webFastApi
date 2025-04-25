@@ -25,3 +25,4 @@ einops
 av
 flask-sqlalchemy
 flask-login
+google-auth
