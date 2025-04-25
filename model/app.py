@@ -32,7 +32,7 @@ MODEL_CHECKPOINT = os.path.join(BASE_PATH, "checkpoints", "best_model_epoch13_68
 
 # Configuration
 NUM_CLASSES = 4  # Update based on your model
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Emotion labels (update based on your training)
 EMOTION_LABELS = [
@@ -299,40 +299,44 @@ class EmotionRecognizer:
         except Exception as e:
             print(f"Error transcribing audio: {str(e)}")
             return ""  # Return empty string on failure
-        
-    def extract_audio_from_video(self, video_path, output_dir="temp_audio"):
-        # Existing code
-        if output_dir is None:
-            output_dir = os.path.join(get_base_path(), "temp_audio")
-        os.makedirs(output_dir, exist_ok=True)
-        video_name = os.path.basename(video_path).split('.')[0]
-        audio_path = os.path.join(output_dir, f"{video_name}.wav")
-        
-        if not os.path.exists(audio_path):
-            try:
-                y, sr = librosa.load(video_path, sr=16000, mono=True)
-                import soundfile as sf
-                sf.write(audio_path, y, sr)
-            except Exception as e:
-                raise RuntimeError(f"Failed to extract audio from video: {str(e)}")
-
-        return audio_path
     
-    def extract_mel_spectrogram(self, video_path):
-        audio_path = self.extract_audio_from_video(video_path)
-        y, sr = librosa.load(audio_path, sr=16000)
-        mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
-        mel_spec_db = librosa.amplitude_to_db(mel_spec, ref=np.max)
-        mel_resized = cv2.resize(mel_spec_db, (224, 224), interpolation=cv2.INTER_CUBIC)
-        mel_resized = (mel_resized - mel_resized.min()) / (mel_resized.max() - mel_resized.min())
-        mel_rgb = np.stack([mel_resized] * 3, axis=-1)
-        # mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32).permute(2, 0, 1)    
-        mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32, device=self.device).permute(2, 0, 1)
-        mel_normalized = T.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        )(mel_tensor)
-        return mel_normalized
+    def extract_mel_spectrogram(self, audio_path):
+        try:
+            y, sr = librosa.load(audio_path, sr=16000)
+            if len(y) == 0 or np.all(y == 0):  # Check for empty or silent audio
+                print("Warning: Audio is empty or silent. Returning zero tensor.")
+                return torch.zeros((3, 224, 224), dtype=torch.float32, device=self.device)
+
+            mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
+            mel_spec_db = librosa.amplitude_to_db(mel_spec, ref=np.max)
+
+            # Check for NaNs or Infs in mel_spec_db
+            if np.any(np.isnan(mel_spec_db)) or np.any(np.isinf(mel_spec_db)):
+                print("Warning: Mel spectrogram contains NaNs or Infs. Returning zero tensor.")
+                return torch.zeros((3, 224, 224), dtype=torch.float32, device=self.device)
+
+            mel_resized = cv2.resize(mel_spec_db, (224, 224), interpolation=cv2.INTER_CUBIC)
+
+            # Normalize mel_resized
+            min_val = mel_resized.min()
+            max_val = mel_resized.max()
+            if max_val == min_val:  # Handle flat spectrogram
+                print("Warning: Mel spectrogram is flat (max == min). Returning zero tensor.")
+                return torch.zeros((3, 224, 224), dtype=torch.float32, device=self.device)
+
+            mel_resized = (mel_resized - min_val) / (max_val - min_val)
+            mel_rgb = np.stack([mel_resized] * 3, axis=-1)
+
+            mel_tensor = torch.tensor(mel_rgb, dtype=torch.float32, device=self.device).permute(2, 0, 1)
+            mel_normalized = T.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )(mel_tensor)
+            return mel_normalized
+
+        except Exception as e:
+            print(f"Error processing mel spectrogram for {video_path}: {str(e)}")
+            return torch.zeros((3, 224, 224), dtype=torch.float32, device=self.device)
     
     def extract_video_frames(self, video_path, num_frames=10):
         cap = cv2.VideoCapture(video_path)
@@ -399,7 +403,7 @@ class EmotionRecognizer:
         )
         return encoding["input_ids"], encoding["attention_mask"]
     
-    def predict_emotion(self, video_path, text=""):
+    def predict_emotion(self, video_path, audio_path, text):
         # with suppress_all():
         try:
             # Process video
@@ -420,15 +424,10 @@ class EmotionRecognizer:
                 video_tensor = torch.cat([video_tensor, padding])
             
             # Process audio
-            mel_spec = self.extract_mel_spectrogram(video_path)
-            # Extract text from audio
-            audio_path = self.extract_audio_from_video(video_path)
-            extracted_text = self.extract_text_from_audio(audio_path)
-            # Combine provided text (if any) with extracted text
-            combined_text = f"{text} {extracted_text}".strip() if text else extracted_text
+            mel_spec = self.extract_mel_spectrogram(audio_path)
             
-            # Process text (use combined_text)
-            input_ids, attention_mask = self.process_text(combined_text)
+            # Process text
+            input_ids, attention_mask = self.process_text(text)
             
             # Prepare inputs
             video_input = video_tensor.unsqueeze(0).to(self.device)
@@ -457,7 +456,7 @@ class EmotionRecognizer:
                 "probabilities": {label: float(prob) for label, prob in zip(EMOTION_LABELS, probabilities)},
                 "timestamp": datetime.now().isoformat(),
                 "video_path": video_path,
-                "transcribed_text": extracted_text  # Include transcribed text in results
+                "transcribed_text": text  # Include transcribed text in results
             }
             
             return results
@@ -468,7 +467,7 @@ class EmotionRecognizer:
                 "timestamp": datetime.now().isoformat()
             }
 
-def main(video_path, text=''):
+def main(video_path, audio_path, text):
     # Initialize recognizer with suppressed output
     # with suppress_all():
     recognizer = EmotionRecognizer()
@@ -481,14 +480,13 @@ def main(video_path, text=''):
         print(json.dumps({"error": "No video path provided"}, indent=2))
         return
     
-    result = recognizer.predict_emotion(video_path, text)
+    result = recognizer.predict_emotion(video_path, audio_path, text)
     return json.dumps(result, indent=2)
 
 if __name__ == "__main__":
     # Example usage with your specific video path
-    video_path = "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/splits/videoplayback/videoplayback_part15.mp4"
-    # video_path = '/Users/alikhanbaidussenov/Downloads/Movie on 25.04.2025 at 07.21.mp4'
-    sample_text = ""  # Optional text input
+    # video_path = "/Users/alikhanbaidussenov/Desktop/coding/projects/nu-adam/webFastApi/splits/videoplayback/videoplayback_part15.mp4"
+    video_path = '/Users/alikhanbaidussenov/Pictures/Photo Booth Library/Pictures/Movie on 25.04.2025 at 16.38 #2.mov'
     
     try:
         # Initialize recognizer (with suppressed output during init)
@@ -497,7 +495,7 @@ if __name__ == "__main__":
         
         # Process the video
         print(f"\nProcessing video: {video_path}...")
-        result = recognizer.predict_emotion(video_path, sample_text)
+        result = recognizer.predict_emotion(video_path)
         
         # Pretty-print results
         print("\nEmotion Recognition Results:")

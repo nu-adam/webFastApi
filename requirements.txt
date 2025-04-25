@@ -27,3 +27,4 @@ flask-sqlalchemy
 flask-login
 google-auth
 openai-whisper
+nltk

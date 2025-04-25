@@ -29,3 +29,7 @@ uploads
 splits
 temp_audio
 instance/
+audio_splits
+text_splits
+video_splits
+check.txt

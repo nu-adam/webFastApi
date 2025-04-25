@@ -31,5 +31,4 @@ class Video(db.Model):
     sadness = db.Column(db.Float)
     neutral = db.Column(db.Float)
     excited = db.Column(db.Float)
-    transcription = db.Column(db.Text, default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
